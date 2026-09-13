@@ -77,14 +77,22 @@
     border-bottom:1px solid var(--border);
     margin-bottom:16px;
   }
-  .rail-brand .mark{
-    width:34px;height:34px;
-    background:linear-gradient(160deg,var(--red-bright),var(--red-dim));
-    clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:#fff;
-    flex-shrink:0;
-  }
+ .rail-brand .mark{
+  width:50px;
+  height:50px;
+  background:transparent;
+  clip-path:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.rail-brand .mark img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
   .rail-brand .name{
     font-family:'Oswald',sans-serif;
     font-weight:600;
@@ -374,7 +382,9 @@
   <!-- ============ SIDEBAR ============ -->
   <div class="rail">
     <div class="rail-brand">
-      <div class="mark">HH</div>
+      <div class="mark">
+  <img src="hudson_main-removebg-preview.png" alt="Hudson Heights Logo">
+</div>
       <div class="name">HUDSON HEIGHTS
         <small>Faction Management</small>
       </div>
