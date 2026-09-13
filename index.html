@@ -713,7 +713,9 @@
       pools[t.id] = {};
       let running = [];
       TIER_ORDER.forEach(tier=>{
-        running = running.concat(POOL_ADD[t.id][tier].map(([name,rarity])=>({name,rarity})));
+        running = running.concat(
+  POOL_ADD[t.id][tier].map(([name,rarity,image])=>({name,rarity,image}))
+);
         pools[t.id][tier] = running.slice();
       });
     });
@@ -909,7 +911,17 @@
       setTimeout(()=>{
         const card = document.createElement('div');
         card.className = 'drop-card'+(r.rarity==='legendary' && settings.legendAlert ? ' legendary' : '');
-        card.innerHTML = `<div class="icon">${ICON[state.type]}</div><div class="nm">${r.name}</div><span class="rarity-pill r-${r.rarity}">${cap(r.rarity)}</span>`;
+        card.innerHTML = `
+  <div class="icon">
+    ${r.image
+      ? `<img src="${r.image}" alt="${r.name}" class="weapon-img">`
+      : ICON[state.type]}
+  </div>
+  <div class="nm">${r.name}</div>
+  <span class="rarity-pill r-${r.rarity}">
+    ${cap(r.rarity)}
+  </span>
+`;
         arena.appendChild(card);
       }, settings.skipAnim ? 0 : idx*delay);
     });
