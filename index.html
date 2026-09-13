@@ -1094,25 +1094,76 @@
 })();
 </script>
 
-<audio id="bgMusic" loop>
-  <source src="audio/Lil%20Swipe%20x%20Ju%20Money%20-%20Melo%20(Official%20Music%20Video).mp3" type="audio/mpeg">
-</audio>
+<audio id="bgMusic"></audio>
 
-<button id="musicBtn" class="btn">▶ Play Music</button>
+<div style="display:flex;gap:8px;align-items:center;">
+  <button id="prevSong" class="btn">⏮</button>
+  <button id="musicBtn" class="btn">▶ Play</button>
+  <button id="nextSong" class="btn">⏭</button>
+</div>
+
+<div id="songName" style="margin-top:8px;font-size:12px;color:var(--text-muted);">
+  Melo
+</div>
 
 <script>
   const music = document.getElementById('bgMusic');
   const musicBtn = document.getElementById('musicBtn');
+  const prevSong = document.getElementById('prevSong');
+  const nextSong = document.getElementById('nextSong');
+  const songName = document.getElementById('songName');
+
+  const playlist = [
+    {
+      name: 'Melo',
+      file: 'audio/melo.mp3'
+    },
+    {
+      name: 'Song 2',
+      file: 'audio/song2.mp3'
+    }
+  ];
+
+  let currentSong = 0;
+
+  function loadSong() {
+    music.src = playlist[currentSong].file;
+    songName.textContent = playlist[currentSong].name;
+  }
+
+  function playSong() {
+    music.play();
+    musicBtn.textContent = '⏸ Pause';
+  }
 
   musicBtn.addEventListener('click', () => {
     if (music.paused) {
-      music.play();
-      musicBtn.textContent = '⏸ Pause Music';
+      playSong();
     } else {
       music.pause();
-      musicBtn.textContent = '▶ Play Music';
+      musicBtn.textContent = '▶ Play';
     }
   });
+
+  nextSong.addEventListener('click', () => {
+    currentSong = (currentSong + 1) % playlist.length;
+    loadSong();
+    playSong();
+  });
+
+  prevSong.addEventListener('click', () => {
+    currentSong = (currentSong - 1 + playlist.length) % playlist.length;
+    loadSong();
+    playSong();
+  });
+
+  music.addEventListener('ended', () => {
+    currentSong = (currentSong + 1) % playlist.length;
+    loadSong();
+    playSong();
+  });
+
+  loadSong();
 </script>
 
 </body>
