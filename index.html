@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hudson Heights — Faction Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e0d;
+    --bg-2:#0d0a09;
+    --surface:#1b1513;
+    --surface-2:#241b18;
+    --border:#34241f;
+    --text:#efe6e1;
+    --text-muted:#a89a94;
+    --red:#a8291f;
+    --red-bright:#e2472f;
+    --red-dim:#5c1a15;
+    --gold:#c9a13b;
+    --common:#8a8a8a;
+    --uncommon:#4caf6d;
+    --rare:#3b82c4;
+    --epic:#9b5de5;
+    --legendary:#c9a13b;
+    --radius:2px;
+    --anim-speed:1;
+    --panel-opacity:1;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(168,41,31,0.12), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(168,41,31,0.08), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    min-height:100vh;
+  }
+  h1,h2,h3,h4,.display{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    margin:0;
+    font-weight:600;
+  }
+  ::selection{background:var(--red);color:#fff;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex;width:100%;min-height:100vh;}
+
+  .rail{
+    width:220px;
+    flex-shrink:0;
+    background:var(--bg-2);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:22px 14px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .rail-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:4px 8px 20px 8px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  .rail-brand .mark{
+    width:34px;height:34px;
+    background:linear-gradient(160deg,var(--red-bright),var(--red-dim));
+    clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;color:#fff;
+    flex-shrink:0;
+  }
+  .rail-brand .name{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    line-height:1.15;
+    letter-spacing:0.03em;
+  }
+  .rail-brand .name small{
+    display:block;
+    font-family:'Inter',sans-serif;
+    text-transform:none;
+    font-size:10.5px;
+    color:var(--text-muted);
+    letter-spacing:0.02em;
+    margin-top:2px;
+  }
+  .nav{display:flex;flex-direction:column;gap:2px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;
+    border-radius:var(--radius);
+    color:var(--text-muted);
+    background:transparent;
+    border:1px solid transparent;
+    cursor:pointer;
+    font-size:13.5px;
+    font-weight:500;
+    text-align:left;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.85;}
+  .nav-item:hover{background:var(--surface);color:var(--text);}
+  .nav-item.active{
+    background:var(--surface-2);
+    color:var(--text);
+    border-color:var(--border);
+    box-shadow:inset 2px 0 0 var(--red-bright);
+  }
+  .rail-foot{
+    margin-top:auto;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    font-size:11px;
+    color:var(--text-muted);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .rail-foot .dot{width:6px;height:6px;background:#4caf6d;border-radius:50%;display:inline-block;margin-right:6px;box-shadow:0 0 6px #4caf6d;}
+
+  .main{flex:1;min-width:0;padding:34px 40px 60px;max-width:1180px;}
+  .page{display:none;}
+  .page.active{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .crumb{font-size:12px;color:var(--text-muted);margin-bottom:6px;}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:20px;flex-wrap:wrap;}
+  .page-head h2{font-size:26px;}
+  .page-head p{color:var(--text-muted);font-size:13.5px;margin-top:6px;max-width:540px;line-height:1.5;}
+
+  .btn{
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text);
+    padding:9px 16px;
+    border-radius:var(--radius);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--red);}
+  .btn.primary{
+    background:linear-gradient(160deg,var(--red-bright),var(--red));
+    border-color:var(--red-bright);
+    color:#fff;
+  }
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn.ghost{background:transparent;}
+  .btn.danger{border-color:#7a2b24;color:#e2847c;background:transparent;}
+  .btn.danger:hover{background:rgba(226,71,47,.08);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-sm{padding:6px 11px;font-size:12px;}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:20px;
+    clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+    opacity:var(--panel-opacity);
+  }
+  .grid{display:grid;gap:14px;}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr);}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media(max-width:900px){.grid.cols-4{grid-template-columns:repeat(2,1fr);} .grid.cols-3{grid-template-columns:repeat(2,1fr);}}
+
+  /* ---------- Home ---------- */
+  .hero{
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:34px 32px;
+    position:relative;
+    overflow:hidden;
+    clip-path:polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
+  }
+  .hero .tag{color:var(--red-bright);font-size:12px;font-weight:600;letter-spacing:.06em;margin-bottom:10px;}
+  .hero h1{font-size:38px;line-height:1.05;max-width:560px;}
+  .hero p.sub{color:var(--text-muted);font-size:14px;margin-top:12px;max-width:480px;line-height:1.6;}
+  .hero-actions{margin-top:22px;display:flex;gap:10px;}
+  .stripe{
+    height:6px;
+    margin:26px 0;
+    background:repeating-linear-gradient(135deg, var(--red-dim) 0 10px, transparent 10px 20px);
+    opacity:.55;
+  }
+  .stat{
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:16px 18px;
+  }
+  .stat .k{font-size:24px;font-family:'Oswald',sans-serif;font-weight:600;}
+  .stat .l{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+  .quick{
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:18px;
+    cursor:pointer;
+    transition:border-color .15s, transform .15s;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .quick:hover{border-color:var(--red);transform:translateY(-2px);}
+  .quick .qh{display:flex;justify-content:space-between;align-items:center;}
+  .quick h4{font-size:14.5px;}
+  .quick p{font-size:12.5px;color:var(--text-muted);margin:0;line-height:1.5;}
+  .quick svg{width:14px;height:14px;color:var(--text-muted);}
+
+  /* ---------- Tabs / chips ---------- */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab{
+    padding:8px 14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    border-radius:var(--radius);
+  }
+  .tab.active{background:var(--red-dim);border-color:var(--red);color:#fff;}
+  .chip{
+    padding:5px 11px;
+    font-size:11.5px;
+    font-weight:600;
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    cursor:pointer;
+    border-radius:20px;
+  }
+  .chip.active{color:#fff;border-color:currentColor;}
+
+  /* ---------- rarity ---------- */
+  .rarity-pill{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    padding:2px 7px;border-radius:20px;
+  }
+  .rarity-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .r-common{color:var(--common);background:rgba(138,138,138,.12);}
+  .r-uncommon{color:var(--uncommon);background:rgba(76,175,109,.12);}
+  .r-rare{color:var(--rare);background:rgba(59,130,196,.12);}
+  .r-epic{color:var(--epic);background:rgba(155,93,229,.12);}
+  .r-legendary{color:var(--legendary);background:rgba(201,161,59,.14);}
+
+  /* ---------- Spin Center ---------- */
+  .spin-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;}
+  @media(max-width:920px){.spin-layout{grid-template-columns:1fr;}}
+  .field-label{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;font-weight:600;}
+  .stepper{display:flex;align-items:center;gap:10px;margin-top:10px;}
+  .stepper button{
+    width:30px;height:30px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    font-size:16px;cursor:pointer;
+  }
+  .stepper .val{font-family:'Oswald',sans-serif;font-size:20px;min-width:38px;text-align:center;}
+  .preset-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .summary-row{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .v{font-weight:600;}
+
+  .arena{
+    min-height:230px;
+    border:1px dashed var(--border);
+    background:var(--surface-2);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .arena.empty{color:var(--text-muted);font-size:13px;flex-direction:column;gap:6px;}
+  .drop-card{
+    width:112px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:10px 8px 8px;
+    text-align:center;
+    animation:reveal calc(.35s / var(--anim-speed)) ease;
+  }
+  @keyframes reveal{from{opacity:0;transform:scale(.7) translateY(6px);}to{opacity:1;transform:none;}}
+  .drop-card .icon{
+    width:100%;height:52px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;margin-bottom:6px;
+  }
+  .drop-card.legendary{border-color:var(--legendary);box-shadow:0 0 14px rgba(201,161,59,.25);}
+  .drop-card .nm{font-size:10.5px;font-weight:600;line-height:1.25;margin-bottom:6px;min-height:26px;}
+
+  .pool-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    font-size:12.5px;
+    margin-bottom:6px;
+  }
+
+  /* ---------- History ---------- */
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{
+    text-align:left;color:var(--text-muted);font-weight:600;font-size:11px;
+    text-transform:uppercase;letter-spacing:.04em;
+    padding:8px 10px;border-bottom:1px solid var(--border);
+  }
+  td{padding:9px 10px;border-bottom:1px solid var(--border);}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .empty-row td{color:var(--text-muted);text-align:center;padding:34px 10px;}
+
+  /* ---------- Settings ---------- */
+  .setting-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 0;border-bottom:1px solid var(--border);gap:20px;
+  }
+  .setting-row:last-child{border-bottom:none;}
+  .setting-row .st{font-size:13.5px;font-weight:600;}
+  .setting-row .sd{font-size:11.5px;color:var(--text-muted);margin-top:3px;}
+  input[type=range]{width:150px;accent-color:var(--red-bright);}
+  .switch{
+    width:38px;height:21px;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:20px;position:relative;cursor:pointer;flex-shrink:0;
+  }
+  .switch .knob{
+    width:15px;height:15px;background:var(--text-muted);border-radius:50%;
+    position:absolute;top:2px;left:2px;transition:.15s;
+  }
+  .switch.on{background:var(--red-dim);border-color:var(--red);}
+  .switch.on .knob{left:19px;background:#fff;}
+
+  /* ---------- modal / toast ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);
+    display:none;align-items:center;justify-content:center;z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--surface);border:1px solid var(--border);
+    padding:24px;width:320px;
+    clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  }
+  .modal h3{font-size:16px;margin-bottom:8px;}
+  .modal p{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:18px;}
+  .modal .row{display:flex;gap:8px;justify-content:flex-end;}
+
+  .toast{
+    position:fixed;bottom:22px;right:22px;
+    background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--red-bright);
+    padding:12px 16px;font-size:12.5px;
+    transform:translateY(20px);opacity:0;transition:.25s;pointer-events:none;z-index:60;max-width:280px;
+  }
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  .muted{color:var(--text-muted);}
+  section+section{margin-top:22px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <div class="rail">
+    <div class="rail-brand">
+      <div class="mark">HH</div>
+      <div class="name">HUDSON HEIGHTS
+        <small>Faction Management</small>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-item active" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" data-page="spin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
+        Spin Center
+      </button>
+      <button class="nav-item" data-page="tiers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>
+        Weapon Tiers
+      </button>
+      <button class="nav-item" data-page="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        History
+      </button>
+      <button class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09A1.7 1.7 0 009 19.4a1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09A1.7 1.7 0 004.6 9a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06A1.7 1.7 0 009 4.6a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06A1.7 1.7 0 0019.4 9a1.7 1.7 0 001.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg>
+        Settings
+      </button>
+    </div>
+    <div class="rail-foot">
+      <span><span class="dot"></span>Local session</span>
+      <span id="saveState">saved</span>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <!-- ---------------- HOME ---------------- -->
+    <div class="page active" id="page-home">
+      <div class="hero">
+        <div class="tag">Hudson Heights · Internal Use Only</div>
+        <h1>Faction Management</h1>
+        <p class="sub">Run reward drops, track every switch and shipment that's gone out the door, and keep the crew's gear pool honest.</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-goto="spin">Open Spin Center</button>
+          <button class="btn ghost" data-goto="tiers">View Weapon Tiers</button>
+        </div>
+      </div>
+      <div class="stripe"></div>
+
+      <div class="grid cols-4" id="homeStats"></div>
+
+      <section>
+        <div class="field-label" style="margin-bottom:12px;">Jump to</div>
+        <div class="grid cols-3">
+          <div class="quick" data-goto="spin">
+            <div class="qh"><h4>Spin Center</h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+            <p>Pick a tier and run a drop for a member.</p>
+          </div>
+          <div class="quick" data-goto="tiers">
+            <div class="qh"><h4>Weapon Tiers</h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+            <p>See what's in every pool before you spin.</p>
+          </div>
+          <div class="quick" data-goto="history">
+            <div class="qh"><h4>History</h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+            <p>Every drop, searchable and exportable.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ---------------- SPIN CENTER ---------------- -->
+    <div class="page" id="page-spin">
+      <div class="crumb">Management / Spin Center</div>
+      <div class="page-head">
+        <div>
+          <h2>Spin Center</h2>
+          <p>Configure a drop and run it for a member of the faction.</p>
+        </div>
+      </div>
+
+      <div class="spin-layout">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="field-label">Tier</div>
+            <div class="tabs" id="tierTabs"></div>
+          </div>
+          <div class="card">
+            <div class="field-label">Reward type</div>
+            <div class="tabs" id="typeTabs"></div>
+          </div>
+          <div class="card">
+            <div class="field-label">Member</div>
+            <input id="memberInput" placeholder="Type a name…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-size:13px;border-radius:var(--radius);">
+          </div>
+          <div class="card">
+            <div class="field-label">Spin amount</div>
+            <div class="preset-row" id="presetRow"></div>
+            <div class="stepper">
+              <button id="decSpin">−</button>
+              <div class="val" id="spinVal">1</div>
+              <button id="incSpin">+</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="summary-row"><span class="muted">Member</span><span class="v" id="sumMember">Not set</span></div>
+            <div class="summary-row"><span class="muted">Tier</span><span class="v" id="sumTier">Test</span></div>
+            <div class="summary-row"><span class="muted">Type</span><span class="v" id="sumType">Guns</span></div>
+            <div class="summary-row"><span class="muted">Spins</span><span class="v" id="sumSpins">1</span></div>
+            <button class="btn primary" id="runSpin" style="width:100%;margin-top:14px;">Start Spin</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="field-label">Results</div>
+            <div class="arena empty" id="arena">Configure a drop and hit Start Spin</div>
+            <div id="saveRow" style="display:none;margin-top:12px;text-align:right;">
+              <button class="btn ghost btn-sm" id="clearArena">Clear</button>
+              <button class="btn primary btn-sm" id="saveDrop">Save to history</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="field-label" style="display:flex;justify-content:space-between;">
+              <span>Possible drops</span><span id="poolCount" class="muted">0 items</span>
+            </div>
+            <div class="tabs" id="poolRarityChips" style="margin-bottom:10px;"></div>
+            <div id="poolList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------- WEAPON TIERS ---------------- -->
+    <div class="page" id="page-tiers">
+      <div class="crumb">Management / Weapon Tiers</div>
+      <div class="page-head">
+        <div>
+          <h2>Weapon Tiers</h2>
+          <p>Browse every gun, ammo, and accessory pool in the faction catalog.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="field-label">Tier</div>
+        <div class="tabs" id="tvTierTabs"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="field-label">Category</div>
+        <div class="tabs" id="tvTypeTabs"></div>
+      </div>
+      <div class="card">
+        <div class="field-label" style="display:flex;justify-content:space-between;">
+          <span>Rarity</span><span id="tvCount" class="muted">0 items</span>
+        </div>
+        <div class="tabs" id="tvRarityChips" style="margin:10px 0 16px;"></div>
+        <div class="grid cols-4" id="tvGrid"></div>
+      </div>
+    </div>
+
+    <!-- ---------------- HISTORY ---------------- -->
+    <div class="page" id="page-history">
+      <div class="crumb">Management / History</div>
+      <div class="page-head">
+        <div>
+          <h2>History</h2>
+          <p>Every saved drop, in order, with export for the books.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost btn-sm" id="exportCsv">Export CSV</button>
+          <button class="btn danger btn-sm" id="clearHistory">Clear all history</button>
+        </div>
+      </div>
+      <div class="grid cols-4" id="histStats" style="margin-bottom:18px;"></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Time</th><th>Member</th><th>Tier</th><th>Type</th><th>Item</th><th>Rarity</th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ---------------- SETTINGS ---------------- -->
+    <div class="page" id="page-settings">
+      <div class="crumb">Management / Settings</div>
+      <div class="page-head">
+        <div>
+          <h2>Settings</h2>
+          <p>Spin behavior, motion, and stored data.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="field-label" style="margin-bottom:2px;">Spin behavior</div>
+        <div class="setting-row">
+          <div><div class="st">Reveal speed</div><div class="sd">Faster reveal animation per drop card.</div></div>
+          <input type="range" min="1" max="3" step="1" id="animSpeed">
+        </div>
+        <div class="setting-row">
+          <div><div class="st">Skip animations</div><div class="sd">Show all results instantly.</div></div>
+          <div class="switch" id="skipAnim"><div class="knob"></div></div>
+        </div>
+        <div class="setting-row">
+          <div><div class="st">Legendary alert</div><div class="sd">Highlight legendary pulls with a glow.</div></div>
+          <div class="switch on" id="legendAlert"><div class="knob"></div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="field-label" style="margin-bottom:2px;">Appearance</div>
+        <div class="setting-row">
+          <div><div class="st">Panel opacity</div><div class="sd">Opacity of cards and panels.</div></div>
+          <input type="range" min="0.7" max="1" step="0.05" id="panelOpacity">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field-label" style="margin-bottom:2px;">Data</div>
+        <div class="setting-row">
+          <div><div class="st">Export history</div><div class="sd">Download every saved drop as CSV.</div></div>
+          <button class="btn btn-sm" id="settingsExport">Export CSV</button>
+        </div>
+        <div class="setting-row">
+          <div><div class="st">Clear spin history</div><div class="sd">Removes saved drops only.</div></div>
+          <button class="btn danger btn-sm" id="settingsClearHistory">Clear</button>
+        </div>
+        <div class="setting-row">
+          <div><div class="st">Reset settings</div><div class="sd">Restore defaults on this page.</div></div>
+          <button class="btn danger btn-sm" id="settingsResetPrefs">Reset</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- confirm modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm action</h3>
+    <p id="modalBody">This change will be applied immediately.</p>
+    <div class="row">
+      <button class="btn ghost btn-sm" id="modalCancel">Cancel</button>
+      <button class="btn primary btn-sm" id="modalConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= DATA ================= */
+  const TIERS = [
+    {id:'test', label:'Test', desc:'Entry-level reward pool'},
+    {id:'tier1', label:'Tier 1', desc:'Standard reward pool'},
+    {id:'tier15', label:'Tier 1.5', desc:'Elevated reward pool'},
+    {id:'tier2', label:'Tier 2', desc:'Full reward pool, including switches'},
+  ];
+  const TYPES = [
+    {id:'guns', label:'Guns'},
+    {id:'bullets', label:'Bullets'},
+    {id:'accessories', label:'Accessories'},
+  ];
+  const RARITIES = ['common','uncommon','rare','epic','legendary'];
+  const ICON = {guns:'🔫', bullets:'●', accessories:'⚙'};
+
+  // cumulative pools per tier (each tier includes everything from the previous tier)
+  const POOL_ADD = {
+    guns:{
+      test:[['Pistol','common'],['Combat Pistol','common'],['Micro SMG','uncommon'],['Pump Shotgun','uncommon'],['SMG','rare']],
+      tier1:[['Assault Rifle','uncommon'],['Carbine Rifle','rare'],['Sawed-Off Shotgun','uncommon'],['Machine Pistol','common'],['Heavy Pistol','rare']],
+      tier15:[['Special Carbine','rare'],['Advanced Rifle','epic'],['Assault Shotgun','rare'],['Marksman Rifle','epic'],['Bullpup Rifle','uncommon']],
+      tier2:[['Combat MG','epic'],['Heavy Sniper','legendary'],['RPG','legendary'],['Minigun','legendary'],['Sniper Rifle','epic']],
+    },
+    bullets:{
+      test:[['Pistol Ammo','common'],['SMG Ammo','common']],
+      tier1:[['Rifle Ammo','uncommon'],['Shotgun Shells','uncommon']],
+      tier15:[['Sniper Ammo','rare'],['Incendiary Rounds','epic']],
+      tier2:[['Explosive Rounds','legendary'],['AP Rounds','epic']],
+    },
+    accessories:{
+      test:[['Extended Clip','common'],['Flashlight','common']],
+      tier1:[['Grip','uncommon'],['Suppressor','rare']],
+      tier15:[['Scope','rare'],['Drum Mag','epic']],
+      tier2:[['Auto Switch','legendary'],['Compensator','epic']],
+    }
+  };
+  const TIER_ORDER = ['test','tier1','tier15','tier2'];
+  function buildPools(){
+    const pools = {};
+    TYPES.forEach(t=>{
+      pools[t.id] = {};
+      let running = [];
+      TIER_ORDER.forEach(tier=>{
+        running = running.concat(POOL_ADD[t.id][tier].map(([name,rarity])=>({name,rarity})));
+        pools[t.id][tier] = running.slice();
+      });
+    });
+    return pools;
+  }
+  const POOLS = buildPools();
+
+  const TIER_WEIGHTS = {
+    test:   {common:65, uncommon:28, rare:6,  epic:1,  legendary:0},
+    tier1:  {common:50, uncommon:32, rare:14, epic:4,  legendary:0},
+    tier15: {common:35, uncommon:30, rare:22, epic:11, legendary:2},
+    tier2:  {common:20, uncommon:25, rare:25, epic:20, legendary:10},
+  };
+
+  /* ================= STATE ================= */
+  let state = {
+    tier: 'test',
+    type: 'guns',
+    spins: 1,
+    poolFilter: 'all',
+    tvTier: 'test',
+    tvType: 'guns',
+    tvFilter: 'all',
+  };
+  let settings = { animSpeed:2, skipAnim:false, legendAlert:true, panelOpacity:1 };
+  let history = [];
+  let pendingResults = null;
+  let storageOk = true;
+
+  /* ================= STORAGE ================= */
+  async function loadData(){
+    try{
+      const s = ({value: localStorage.getItem('hh:settings')});
+      if(s && s.value) settings = Object.assign(settings, JSON.parse(s.value));
+    }catch(e){ /* key not found or storage unavailable — use defaults */ }
+    try{
+      const h = ({value: localStorage.getItem('hh:history')});
+      if(h && h.value) history = JSON.parse(h.value);
+    }catch(e){ /* no history yet */ }
+    applySettingsToUI();
+    applySettingsToCSS();
+    renderAll();
+  }
+  async function saveSettings(){
+    setSaveState('saving');
+    try{
+      localStorage.setItem('hh:settings', JSON.stringify(settings));
+      setSaveState('saved');
+    }catch(e){ storageOk = false; setSaveState('local only'); }
+  }
+  async function saveHistory(){
+    setSaveState('saving');
+    try{
+      localStorage.setItem('hh:history', JSON.stringify(history));
+      setSaveState('saved');
+    }catch(e){ storageOk = false; setSaveState('local only'); }
+  }
+  function setSaveState(txt){
+    document.getElementById('saveState').textContent = txt;
+  }
+
+  /* ================= NAV ================= */
+  document.querySelectorAll('.nav-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>gotoPage(btn.dataset.page));
+  });
+  document.querySelectorAll('[data-goto]').forEach(el=>{
+    el.addEventListener('click', ()=>gotoPage(el.dataset.goto));
+  });
+  function gotoPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    document.querySelector('.nav-item[data-page="'+id+'"]').classList.add('active');
+    if(id==='tiers') renderTierViewer();
+    if(id==='history') renderHistory();
+    if(id==='home') renderHome();
+  }
+
+  /* ================= HOME ================= */
+  function renderHome(){
+    const totalSpins = history.reduce((a,h)=>a+h.results.length,0);
+    const legendaryCount = history.reduce((a,h)=>a+h.results.filter(r=>r.rarity==='legendary').length,0);
+    const totalItems = Object.values(POOLS).reduce((a,byTier)=>a+byTier.tier2.length,0);
+    const last = history[0];
+    const stats = [
+      {k: totalSpins, l:'Total spins logged'},
+      {k: legendaryCount, l:'Legendary drops'},
+      {k: totalItems, l:'Items in full catalog'},
+      {k: last ? timeAgo(last.time) : '—', l: last ? 'Last drop' : 'No drops yet'},
+    ];
+    document.getElementById('homeStats').innerHTML = stats.map(s=>
+      `<div class="stat"><div class="k">${s.k}</div><div class="l">${s.l}</div></div>`
+    ).join('');
+  }
+  function timeAgo(ts){
+    const diff = Date.now()-ts;
+    const m = Math.floor(diff/60000);
+    if(m<1) return 'just now';
+    if(m<60) return m+'m ago';
+    const h = Math.floor(m/60);
+    if(h<24) return h+'h ago';
+    return Math.floor(h/24)+'d ago';
+  }
+
+  /* ================= SPIN CENTER ================= */
+  function renderTierTabs(){
+    const el = document.getElementById('tierTabs');
+    el.innerHTML = TIERS.map(t=>
+      `<button class="tab ${state.tier===t.id?'active':''}" data-tier="${t.id}">${t.label}</button>`
+    ).join('');
+    el.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+      state.tier = b.dataset.tier; state.poolFilter='all';
+      renderTierTabs(); renderSummary(); renderPool();
+    }));
+  }
+  function renderTypeTabs(){
+    const el = document.getElementById('typeTabs');
+    el.innerHTML = TYPES.map(t=>
+      `<button class="tab ${state.type===t.id?'active':''}" data-type="${t.id}">${t.label}</button>`
+    ).join('');
+    el.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+      state.type = b.dataset.type; state.poolFilter='all';
+      renderTypeTabs(); renderSummary(); renderPool();
+    }));
+  }
+  function renderPresets(){
+    const el = document.getElementById('presetRow');
+    const presets = [1,5,10,25,50,100];
+    el.innerHTML = presets.map(p=>`<button class="chip ${state.spins===p?'active':''}" data-n="${p}" style="color:var(--red-bright)">${p}</button>`).join('');
+    el.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+      state.spins = parseInt(c.dataset.n,10); renderPresets(); updateSpinVal(); renderSummary();
+    }));
+  }
+  function updateSpinVal(){ document.getElementById('spinVal').textContent = state.spins; }
+  document.getElementById('incSpin').addEventListener('click',()=>{ state.spins=Math.min(200,state.spins+1); updateSpinVal(); renderPresets(); renderSummary(); });
+  document.getElementById('decSpin').addEventListener('click',()=>{ state.spins=Math.max(1,state.spins-1); updateSpinVal(); renderPresets(); renderSummary(); });
+  document.getElementById('memberInput').addEventListener('input', renderSummary);
+
+  function renderSummary(){
+    const tier = TIERS.find(t=>t.id===state.tier);
+    const type = TYPES.find(t=>t.id===state.type);
+    document.getElementById('sumMember').textContent = document.getElementById('memberInput').value.trim() || 'Not set';
+    document.getElementById('sumTier').textContent = tier.label;
+    document.getElementById('sumType').textContent = type.label;
+    document.getElementById('sumSpins').textContent = state.spins;
+  }
+
+  function renderPool(){
+    const pool = POOLS[state.type][state.tier];
+    const filtered = state.poolFilter==='all' ? pool : pool.filter(i=>i.rarity===state.poolFilter);
+    document.getElementById('poolCount').textContent = filtered.length+' items';
+    const chipsEl = document.getElementById('poolRarityChips');
+    chipsEl.innerHTML = ['all'].concat(RARITIES).map(r=>
+      `<button class="chip ${state.poolFilter===r?'active':''}" data-r="${r}" style="color:${r==='all'?'var(--text)':'var(--'+r+')'}">${r==='all'?'All':cap(r)}</button>`
+    ).join('');
+    chipsEl.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+      state.poolFilter=c.dataset.r; renderPool();
+    }));
+    document.getElementById('poolList').innerHTML = filtered.length ? filtered.map(i=>
+      `<div class="pool-item"><span>${i.name}</span><span class="rarity-pill r-${i.rarity}">${cap(i.rarity)}</span></div>`
+    ).join('') : `<div class="muted" style="font-size:12.5px;padding:10px 0;">No items match this filter.</div>`;
+  }
+  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  function weightedPick(tier){
+    const weights = TIER_WEIGHTS[tier];
+    const pool = POOLS[state.type][tier];
+    // only consider rarities that actually have items in this pool
+    const available = RARITIES.filter(r => weights[r]>0 && pool.some(i=>i.rarity===r));
+    const total = available.reduce((a,r)=>a+weights[r],0);
+    let roll = Math.random()*total;
+    let chosenRarity = available[available.length-1];
+    for(const r of available){
+      if(roll < weights[r]){ chosenRarity = r; break; }
+      roll -= weights[r];
+    }
+    const options = pool.filter(i=>i.rarity===chosenRarity);
+    return options[Math.floor(Math.random()*options.length)];
+  }
+
+  document.getElementById('runSpin').addEventListener('click', runSpin);
+  function runSpin(){
+    const arena = document.getElementById('arena');
+    arena.classList.remove('empty');
+    arena.innerHTML = '';
+    const results = [];
+    for(let i=0;i<state.spins;i++){
+      results.push(weightedPick(state.tier));
+    }
+    pendingResults = results;
+    const delay = settings.skipAnim ? 0 : 90 / settings.animSpeed;
+    results.forEach((r,idx)=>{
+      setTimeout(()=>{
+        const card = document.createElement('div');
+        card.className = 'drop-card'+(r.rarity==='legendary' && settings.legendAlert ? ' legendary' : '');
+        card.innerHTML = `<div class="icon">${ICON[state.type]}</div><div class="nm">${r.name}</div><span class="rarity-pill r-${r.rarity}">${cap(r.rarity)}</span>`;
+        arena.appendChild(card);
+      }, settings.skipAnim ? 0 : idx*delay);
+    });
+    document.getElementById('saveRow').style.display = 'block';
+  }
+  document.getElementById('clearArena').addEventListener('click', ()=>{
+    const arena = document.getElementById('arena');
+    arena.classList.add('empty');
+    arena.innerHTML = 'Configure a drop and hit Start Spin';
+    document.getElementById('saveRow').style.display='none';
+    pendingResults = null;
+  });
+  document.getElementById('saveDrop').addEventListener('click', async ()=>{
+    if(!pendingResults) return;
+    const member = document.getElementById('memberInput').value.trim() || 'Unassigned';
+    history.unshift({
+      id: 'd'+Date.now(),
+      time: Date.now(),
+      member,
+      tier: TIERS.find(t=>t.id===state.tier).label,
+      type: TYPES.find(t=>t.id===state.type).label,
+      results: pendingResults,
+    });
+    await saveHistory();
+    showToast('Drop saved to history');
+    document.getElementById('clearArena').click();
+    renderHome();
+  });
+
+  /* ================= WEAPON TIERS VIEWER ================= */
+  function renderTierViewer(){
+    const tt = document.getElementById('tvTierTabs');
+    tt.innerHTML = TIERS.map(t=>
+      `<button class="tab ${state.tvTier===t.id?'active':''}" data-t="${t.id}">${t.label}</button>`
+    ).join('');
+    tt.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{ state.tvTier=b.dataset.t; renderTierViewer(); }));
+
+    const ty = document.getElementById('tvTypeTabs');
+    ty.innerHTML = TYPES.map(t=>
+      `<button class="tab ${state.tvType===t.id?'active':''}" data-t="${t.id}">${t.label}</button>`
+    ).join('');
+    ty.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{ state.tvType=b.dataset.t; renderTierViewer(); }));
+
+    const pool = POOLS[state.tvType][state.tvTier];
+    const filtered = state.tvFilter==='all' ? pool : pool.filter(i=>i.rarity===state.tvFilter);
+    const rc = document.getElementById('tvRarityChips');
+    rc.innerHTML = ['all'].concat(RARITIES).map(r=>
+      `<button class="chip ${state.tvFilter===r?'active':''}" data-r="${r}" style="color:${r==='all'?'var(--text)':'var(--'+r+')'}">${r==='all'?'All':cap(r)}</button>`
+    ).join('');
+    rc.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ state.tvFilter=c.dataset.r; renderTierViewer(); }));
+
+    document.getElementById('tvCount').textContent = filtered.length+' items';
+    document.getElementById('tvGrid').innerHTML = filtered.length ? filtered.map(i=>
+      `<div class="card" style="text-align:center;padding:18px 10px;">
+        <div style="font-size:26px;margin-bottom:8px;">${ICON[state.tvType]}</div>
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:8px;">${i.name}</div>
+        <span class="rarity-pill r-${i.rarity}">${cap(i.rarity)}</span>
+      </div>`
+    ).join('') : `<div class="muted" style="grid-column:1/-1;padding:20px 0;text-align:center;">No items in this pool yet.</div>`;
+  }
+
+  /* ================= HISTORY ================= */
+  function renderHistory(){
+    const totalSpins = history.reduce((a,h)=>a+h.results.length,0);
+    const totalGroups = history.length;
+    const epic = history.reduce((a,h)=>a+h.results.filter(r=>r.rarity==='epic').length,0);
+    const legendary = history.reduce((a,h)=>a+h.results.filter(r=>r.rarity==='legendary').length,0);
+    document.getElementById('histStats').innerHTML = [
+      {k:totalSpins,l:'Spins'}, {k:totalGroups,l:'Groups'}, {k:epic,l:'Epic'}, {k:legendary,l:'Legendary'}
+    ].map(s=>`<div class="stat"><div class="k">${s.k}</div><div class="l">${s.l}</div></div>`).join('');
+
+    const rows = [];
+    history.forEach(group=>{
+      group.results.forEach(r=>{
+        rows.push({time:group.time, member:group.member, tier:group.tier, type:group.type, name:r.name, rarity:r.rarity});
+      });
+    });
+    const body = document.getElementById('histBody');
+    if(!rows.length){
+      body.innerHTML = `<tr class="empty-row"><td colspan="6">No spins yet. Start one in the Spin Center to see it here.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.slice(0,300).map(r=>
+      `<tr><td>${new Date(r.time).toLocaleString()}</td><td>${escapeHtml(r.member)}</td><td>${r.tier}</td><td>${r.type}</td><td>${escapeHtml(r.name)}</td><td><span class="rarity-pill r-${r.rarity}">${cap(r.rarity)}</span></td></tr>`
+    ).join('');
+  }
+  function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  function toCsv(){
+    const rows = [['Time','Member','Tier','Type','Item','Rarity']];
+    history.forEach(group=>{
+      group.results.forEach(r=>{
+        rows.push([new Date(group.time).toISOString(), group.member, group.tier, group.type, r.name, r.rarity]);
+      });
+    });
+    return rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  }
+  function exportCsv(){
+    if(!history.length){ showToast('No history to export'); return; }
+    const blob = new Blob([toCsv()], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'hudson-heights-history.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  document.getElementById('exportCsv').addEventListener('click', exportCsv);
+  document.getElementById('settingsExport').addEventListener('click', exportCsv);
+
+  document.getElementById('clearHistory').addEventListener('click', ()=>confirmModal(
+    'Clear all history', 'This deletes every saved drop. This can\'t be undone.', async ()=>{
+      history = []; await saveHistory(); renderHistory(); renderHome(); showToast('History cleared');
+    }));
+  document.getElementById('settingsClearHistory').addEventListener('click', ()=>confirmModal(
+    'Clear spin history', 'This deletes every saved drop. This can\'t be undone.', async ()=>{
+      history = []; await saveHistory(); renderHistory(); renderHome(); showToast('History cleared');
+    }));
+
+  /* ================= SETTINGS ================= */
+  function applySettingsToUI(){
+    document.getElementById('animSpeed').value = settings.animSpeed;
+    document.getElementById('panelOpacity').value = settings.panelOpacity;
+    setSwitch('skipAnim', settings.skipAnim);
+    setSwitch('legendAlert', settings.legendAlert);
+  }
+  function applySettingsToCSS(){
+    document.documentElement.style.setProperty('--anim-speed', settings.animSpeed);
+    document.documentElement.style.setProperty('--panel-opacity', settings.panelOpacity);
+  }
+  function setSwitch(id,on){
+    const el = document.getElementById(id);
+    el.classList.toggle('on',!!on);
+  }
+  document.getElementById('animSpeed').addEventListener('input', e=>{ settings.animSpeed=parseFloat(e.target.value); applySettingsToCSS(); saveSettings(); });
+  document.getElementById('panelOpacity').addEventListener('input', e=>{ settings.panelOpacity=parseFloat(e.target.value); applySettingsToCSS(); saveSettings(); });
+  document.getElementById('skipAnim').addEventListener('click', ()=>{ settings.skipAnim=!settings.skipAnim; setSwitch('skipAnim',settings.skipAnim); saveSettings(); });
+  document.getElementById('legendAlert').addEventListener('click', ()=>{ settings.legendAlert=!settings.legendAlert; setSwitch('legendAlert',settings.legendAlert); saveSettings(); });
+  document.getElementById('settingsResetPrefs').addEventListener('click', ()=>confirmModal(
+    'Reset settings', 'Restores reveal speed, alerts, and appearance to defaults.', async ()=>{
+      settings = { animSpeed:2, skipAnim:false, legendAlert:true, panelOpacity:1 };
+      applySettingsToUI(); applySettingsToCSS(); await saveSettings(); showToast('Settings reset');
+    }));
+
+  /* ================= MODAL / TOAST ================= */
+  const overlay = document.getElementById('overlay');
+  let confirmCb = null;
+  function confirmModal(title, body, cb){
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').textContent = body;
+    confirmCb = cb;
+    overlay.classList.add('show');
+  }
+  document.getElementById('modalCancel').addEventListener('click', ()=>overlay.classList.remove('show'));
+  document.getElementById('modalConfirm').addEventListener('click', ()=>{
+    overlay.classList.remove('show');
+    if(confirmCb) confirmCb();
+    confirmCb = null;
+  });
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  /* ================= INIT ================= */
+  function renderAll(){
+    renderHome();
+    renderTierTabs();
+    renderTypeTabs();
+    renderPresets();
+    updateSpinVal();
+    renderSummary();
+    renderPool();
+    renderTierViewer();
+    renderHistory();
+  }
+  loadData();
+
+})();
+</script>
+</body>
+</html>
